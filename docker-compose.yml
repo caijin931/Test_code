@@ -1,0 +1,41 @@
+services:
+  app:
+    build: .
+    image: testcode:latest
+    environment:
+      TESTCODE_COZE_ACCESS_TOKEN: ${TESTCODE_COZE_ACCESS_TOKEN:-}
+      TESTCODE_DIFY_API_KEY: ${TESTCODE_DIFY_API_KEY:-}
+      TESTCODE_N8N_BASE_URL: ${TESTCODE_N8N_BASE_URL:-http://n8n:5678/api}
+      TESTCODE_DIFY_CACHE_BACKEND: ${TESTCODE_DIFY_CACHE_BACKEND:-redis}
+      TESTCODE_DIFY_CACHE_REDIS_URL: ${TESTCODE_DIFY_CACHE_REDIS_URL:-redis://redis:6379/0}
+    depends_on:
+      - redis
+      - n8n
+    volumes:
+      - ./:/app
+    command: ["health", "--settings", "config/settings.example.yaml"]
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+  n8n:
+    image: n8nio/n8n:latest
+    ports:
+      - "5678:5678"
+    environment:
+      N8N_HOST: localhost
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      N8N_EDITOR_BASE_URL: http://localhost:5678
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      GENERIC_TIMEZONE: UTC
+    volumes:
+      - n8n-data:/home/node/.n8n
+
+volumes:
+  redis-data:
+  n8n-data:

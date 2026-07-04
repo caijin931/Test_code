@@ -1,0 +1,19 @@
+coze:
+  access_token: "your-coze-token"
+  base_url: "https://api.coze.com"
+  timeout_seconds: 30
+
+dify:
+  api_key: "your-dify-api-key"
+  base_url: "https://api.dify.ai"
+  timeout_seconds: 30
+  cache_enabled: true
+  cache_directory: ".cache/dify"
+  cache_ttl_seconds: 86400
+  cache_backend: "file"
+  cache_redis_url: ""
+  cache_redis_prefix: "testcode:dify"
+
+n8n:
+  base_url: "https://n8n.example.com/api"
+  timeout_seconds: 30

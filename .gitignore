@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Type check / lint cache
+.mypy_cache/
+.ruff_cache/
+
+# IDEs
+.idea/
+.vscode/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Local config
+config/settings.yaml
+config/*.local.yaml
+
+# Runtime / cache
+.cache/
+artifacts/
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker local overrides
+docker-compose.override.yml
+
+# Secrets / keys
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+
+# Notebook checkpoints
+.ipynb_checkpoints/

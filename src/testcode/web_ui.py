@@ -1837,10 +1837,32 @@ def main() -> None:
     _inject_style()
     _init_session()
 
+    # --- Password gate (only when ACCESS_PASSWORD is configured) ---
+    access_password = ""
+    try:
+        access_password = st.secrets.get("ACCESS_PASSWORD", "")
+    except Exception:
+        pass
+    if access_password:
+        if "authenticated" not in st.session_state:
+            st.session_state.authenticated = False
+        if not st.session_state.authenticated:
+            st.title("🔒 Testcode")
+            pwd = st.text_input("请输入访问密码", type="password", key="login_pwd")
+            if st.button("登录", type="primary"):
+                if pwd == access_password:
+                    st.session_state.authenticated = True
+                    st.rerun()
+                else:
+                    st.error("密码错误")
+            st.stop()
+
+    # --- Load settings: prefer Streamlit Secrets, fall back to YAML file ---
+    settings_path = _load_settings_path()
+    _map_secrets_to_env()
+
     st.title("Testcode 可视化控制台")
     st.caption("功能测试 · 接口测试 · 性能测试 — 统一的测试编排与可视化平台")
-
-    settings_path = _load_settings_path()
 
     # provider health sidebar
     with st.sidebar:
@@ -1876,6 +1898,34 @@ def _load_settings_path() -> Path:
     default = Path("config/settings.example.yaml")
     text = st.sidebar.text_input("Settings file", value=str(default), key="global_settings")
     return Path(text)
+
+
+def _map_secrets_to_env() -> None:
+    """Map Streamlit Cloud Secrets to environment variables.
+
+    Streamlit Secrets are available via st.secrets but NOT automatically
+    mapped to os.environ. This function bridges that gap so the existing
+    AppSettings.from_env() picks them up.
+    """
+    import os
+
+    secret_keys = [
+        "TESTCODE_COZE_ACCESS_TOKEN",
+        "TESTCODE_COZE_BOT_ID",
+        "TESTCODE_COZE_BASE_URL",
+        "TESTCODE_COZE_TIMEOUT_SECONDS",
+        "TESTCODE_DIFY_API_KEY",
+        "TESTCODE_DIFY_BASE_URL",
+        "TESTCODE_DIFY_TIMEOUT_SECONDS",
+        "TESTCODE_N8N_BASE_URL",
+        "TESTCODE_N8N_TIMEOUT_SECONDS",
+    ]
+    try:
+        for key in secret_keys:
+            if key in st.secrets and key not in os.environ:
+                os.environ[key] = str(st.secrets[key])
+    except Exception:
+        pass  # st.secrets not available locally — that's fine
 
 
 def _jsonable(value):

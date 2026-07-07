@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git stash *)",
+      "Bash(python -m pytest tests/test_cli_run.py -v --tb=short)",
+      "Bash(python -c \"from testcode.cli import app; print\\([c for c in app.registered_commands]\\)\")",
+      "Bash(python -c \"from testcode.cli import app; [print\\(c.name\\) for c in app.registered_commands]\")",
+      "Bash(python -c \"from testcode.cli import app, api_test, perf_test; print\\('api_test func:', api_test\\); print\\('perf_test func:', perf_test\\); print\\('OK'\\)\")"
+    ]
+  }
+}

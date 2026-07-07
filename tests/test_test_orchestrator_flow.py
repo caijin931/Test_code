@@ -21,10 +21,26 @@ class StubTransport(httpx.BaseTransport):
 
 def test_execute_test_flow_returns_all_artifacts() -> None:
     def coze_handler(request: httpx.Request) -> httpx.Response:
-        return httpx.Response(200, json={"code": 0, "messages": [{"role": "assistant", "content": "coze extra"}]})
+        return httpx.Response(
+            200,
+            json={
+                "code": 0,
+                "messages": [
+                    {
+                        "role": "assistant",
+                        "content": '{"test_data": {"account": "test-user"}, "browser_hints": {"browser": "chromium"}}',
+                    }
+                ],
+            },
+        )
 
     def dify_handler(request: httpx.Request) -> httpx.Response:
-        return httpx.Response(200, json={"answer": "dify ok"})
+        return httpx.Response(
+            200,
+            json={
+                "answer": '{"cases": [{"case_id": "req-1-001", "title": "测试登录功能 - AI生成", "priority": "high", "severity": "critical", "preconditions": [], "steps": [{"step_no": 1, "action": "打开登录页", "expected_result": "页面加载成功"}], "tags": []}]}'
+            },
+        )
 
     def n8n_handler(request: httpx.Request) -> httpx.Response:
         if request.method == "POST":
@@ -48,6 +64,7 @@ def test_execute_test_flow_returns_all_artifacts() -> None:
     )
 
     assert result["test_cases"].cases[0].title.startswith("测试登录功能")
-    assert result["enrichment"].datasource == "coze-plugin"
+    assert result["enrichment"].datasource == "coze-ai"
     assert result["execution_result"].status == "success"
-    assert "测试流已完成" in result["report"].summary
+    assert result["report"].risk_level == "low"
+    assert len(result["report"].highlights) > 0

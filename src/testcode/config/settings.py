@@ -47,6 +47,7 @@ class AppSettings:
             {
                 "coze": {
                     "access_token": overrides.coze.access_token or base.coze.access_token,
+                    "bot_id": overrides.coze.bot_id or base.coze.bot_id,
                     "base_url": overrides.coze.base_url or base.coze.base_url,
                     "timeout_seconds": overrides.coze.timeout_seconds or base.coze.timeout_seconds,
                 },
@@ -83,6 +84,7 @@ class AppSettings:
             {
                 "coze": {
                     "access_token": os.getenv(f"{prefix}COZE_ACCESS_TOKEN", ""),
+                    "bot_id": os.getenv(f"{prefix}COZE_BOT_ID", ""),
                     "base_url": os.getenv(f"{prefix}COZE_BASE_URL", "https://api.coze.com"),
                     "timeout_seconds": os.getenv(f"{prefix}COZE_TIMEOUT_SECONDS", 30.0),
                 },
@@ -112,6 +114,7 @@ class AppSettings:
         return cls(
             coze=CozeSettings(
                 access_token=str(coze.get("access_token", "")),
+                bot_id=str(coze.get("bot_id", "")),
                 base_url=str(coze.get("base_url", "https://api.coze.com")),
                 timeout_seconds=float(coze.get("timeout_seconds", 30.0)),
             ),

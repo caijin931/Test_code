@@ -1,5 +1,6 @@
 coze:
   access_token: "your-coze-token"
+  bot_id: ""
   base_url: "https://api.coze.com"
   timeout_seconds: 30
 

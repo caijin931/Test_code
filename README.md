@@ -141,6 +141,14 @@ python -m testcode cache-health --settings config/settings.example.yaml
 - `run` — run the provider chain demo
 - `run-test-flow` — execute the full test generation and automation flow
 
+## Web UI
+
+Run `streamlit run src/testcode/web_ui.py` to open a lightweight dashboard for submitting requirements, running the flow, and viewing reports.
+
+If `streamlit` is not on your PATH, run `powershell -ExecutionPolicy Bypass -File scripts/start_web_ui.ps1` to launch the UI.
+
+The UI now uses a lighter dashboard-style layout with card-style summaries, progress feedback, simple charts, report tabs, a report list/detail pane, recent report browsing, and report download/delete actions.
+
 ## Architecture
 
 ### Flow

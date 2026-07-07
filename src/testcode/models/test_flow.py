@@ -10,8 +10,10 @@ class TestRequirement(BaseModel):
     requirement: str
     product_name: str | None = None
     module_name: str | None = None
+    test_type: str = "ui"  # "ui", "api", or "perf"
     tags: list[str] = Field(default_factory=list)
     metadata: dict[str, Any] = Field(default_factory=dict)
+    assertion_rules: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class TestStep(BaseModel):
@@ -45,6 +47,18 @@ class CozeEnrichment(BaseModel):
     raw: dict[str, Any] = Field(default_factory=dict)
 
 
+class AssertionResult(BaseModel):
+    name: str
+    expected: Any
+    actual: Any
+    passed: bool = True
+    message: str | None = None
+
+
+class AssertionSuite(BaseModel):
+    items: list[AssertionResult] = Field(default_factory=list)
+
+
 class AutomationPayload(BaseModel):
     request_id: str
     suite_name: str
@@ -53,6 +67,7 @@ class AutomationPayload(BaseModel):
     browser_hints: dict[str, Any] = Field(default_factory=dict)
     execution_mode: str = "playwright"
     env: dict[str, Any] = Field(default_factory=dict)
+    assertion_rules: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class ExecutionResult(BaseModel):
@@ -64,6 +79,7 @@ class ExecutionResult(BaseModel):
     skipped: int = 0
     duration_seconds: float | None = None
     artifacts: list[str] = Field(default_factory=list)
+    assertions: AssertionSuite = Field(default_factory=AssertionSuite)
     raw: dict[str, Any] = Field(default_factory=dict)
 
 

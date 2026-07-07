@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Testcode — AI 驱动的自动化测试平台</title>
+<style>
+  :root {
+    --blue: #3b82f6;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --purple: #8b5cf6;
+    --slate-50: #f8fafc;
+    --slate-100: #f1f5f9;
+    --slate-200: #e2e8f0;
+    --slate-400: #94a3b8;
+    --slate-600: #475569;
+    --slate-700: #334155;
+    --slate-800: #1e293b;
+    --slate-900: #0f172a;
+    --radius: 12px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; color: var(--slate-800); background: linear-gradient(180deg, #f0f5ff 0%, #fff 100%); line-height: 1.6; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+
+  /* Hero */
+  .hero { text-align: center; padding: 5rem 0 3rem; }
+  .hero h1 { font-size: 2.8rem; font-weight: 800; color: var(--slate-900); letter-spacing: -0.03em; }
+  .hero h1 span { background: linear-gradient(135deg, var(--blue), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .hero p { font-size: 1.15rem; color: var(--slate-600); max-width: 640px; margin: 0 auto 2rem; }
+  .hero-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+  .btn { display: inline-block; padding: 0.75rem 1.8rem; border-radius: 999px; font-weight: 700; font-size: 0.95rem; text-decoration: none; transition: all 0.2s; }
+  .btn-primary { background: var(--blue); color: #fff; box-shadow: 0 4px 14px rgba(59,130,246,0.35); }
+  .btn-primary:hover { background: #2563eb; transform: translateY(-1px); }
+  .btn-outline { border: 2px solid var(--slate-200); color: var(--slate-700); background: #fff; }
+  .btn-outline:hover { border-color: var(--blue); color: var(--blue); }
+
+  /* Status */
+  .status-bar { display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; padding: 1.5rem 0; border-top: 1px solid var(--slate-200); margin: 2rem 0; }
+  .status-item { text-align: center; }
+  .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .status-dot.online { background: var(--green); }
+  .status-label { font-size: 0.85rem; color: var(--slate-600); }
+
+  /* Features */
+  .section { padding: 4rem 0; }
+  .section h2 { text-align: center; font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; }
+  .section .subtitle { text-align: center; color: var(--slate-600); margin-bottom: 3rem; }
+  .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 1.5rem; }
+  .feature-card { background: #fff; border: 1px solid var(--slate-200); border-radius: var(--radius); padding: 1.8rem; box-shadow: 0 4px 20px rgba(15,23,42,0.04); transition: transform 0.2s, box-shadow 0.2s; }
+  .feature-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(15,23,42,0.08); }
+  .feature-icon { font-size: 2rem; margin-bottom: 1rem; }
+  .feature-card h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .feature-card p { color: var(--slate-600); font-size: 0.92rem; }
+  .tag { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700; margin-right: 0.3rem; }
+  .tag-ai { background: #ede9fe; color: var(--purple); }
+  .tag-exec { background: #fef3c7; color: #b45309; }
+  .tag-report { background: #dcfce7; color: #16a34a; }
+
+  /* How it works */
+  .steps { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+  .step { flex: 1; min-width: 200px; max-width: 300px; text-align: center; padding: 1.5rem; }
+  .step-number { width: 2.8rem; height: 2.8rem; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; margin-bottom: 0.8rem; }
+  .step-number.s1 { background: #dbeafe; color: var(--blue); }
+  .step-number.s2 { background: #ede9fe; color: var(--purple); }
+  .step-number.s3 { background: #dcfce7; color: #16a34a; }
+  .step h4 { font-weight: 700; margin-bottom: 0.3rem; }
+  .step p { color: var(--slate-600); font-size: 0.88rem; }
+  .step-arrow { display: flex; align-items: center; font-size: 1.5rem; color: var(--slate-400); }
+
+  /* Quickstart */
+  .code-block { background: var(--slate-900); color: #e2e8f0; padding: 1.5rem; border-radius: var(--radius); font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.85rem; overflow-x: auto; line-height: 1.7; white-space: pre; }
+  .code-block .c { color: #64748b; }
+  .code-block .k { color: #94a3b8; }
+
+  /* Deployment cards */
+  .deploy-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+  .deploy-card { background: #fff; border: 1px solid var(--slate-200); border-radius: var(--radius); padding: 1.8rem; }
+  .deploy-card h3 { font-weight: 700; margin-bottom: 0.8rem; }
+  .deploy-card ol { padding-left: 1.2rem; color: var(--slate-600); font-size: 0.9rem; }
+  .deploy-card ol li { margin-bottom: 0.5rem; }
+  .deploy-card .badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; }
+  .badge-free { background: #dcfce7; color: #16a34a; }
+
+  /* Footer */
+  footer { border-top: 1px solid var(--slate-200); padding: 2rem 0; text-align: center; color: var(--slate-400); font-size: 0.85rem; margin-top: 3rem; }
+  footer a { color: var(--blue); text-decoration: none; }
+
+  @media (max-width: 640px) {
+    .hero h1 { font-size: 2rem; }
+    .steps { flex-direction: column; align-items: center; }
+    .step-arrow { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<header class="hero container">
+  <h1>Testcode <span>AI 驱动</span>的自动化测试平台</h1>
+  <p>输入自然语言需求，AI 自动生成功能测试用例、接口端点定义、性能测试配置，一键执行并生成可视化报告。</p>
+  <div class="hero-buttons">
+    <a class="btn btn-primary" href="https://share.streamlit.io/" target="_blank" rel="noopener">🚀 打开在线应用</a>
+    <a class="btn btn-outline" href="https://github.com/caijin931/Test_code" target="_blank" rel="noopener">📂 GitHub 仓库</a>
+  </div>
+  <div class="status-bar">
+    <div class="status-item"><span class="status-dot online"></span><span class="status-label">AI 引擎: Dify + Coze</span></div>
+    <div class="status-item"><span class="status-dot online"></span><span class="status-label">执行引擎: n8n + asyncio</span></div>
+    <div class="status-item"><span class="status-dot online"></span><span class="status-label">支持: 功能 · 接口 · 性能</span></div>
+  </div>
+</header>
+
+<!-- Features -->
+<section class="section container">
+  <h2>三大测试模块</h2>
+  <p class="subtitle">从需求到报告，全流程 AI 辅助</p>
+  <div class="features">
+    <div class="feature-card">
+      <div class="feature-icon">📋</div>
+      <h3>功能测试</h3>
+      <p>输入产品/模块/需求描述，Dify AI 自动生成结构化测试用例，Coze 增强测试数据，n8n 执行 Playwright 自动化。</p>
+      <div style="margin-top:0.8rem">
+        <span class="tag tag-ai">Dify 生成</span>
+        <span class="tag tag-ai">Coze 增强</span>
+        <span class="tag tag-exec">n8n 执行</span>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔌</div>
+      <h3>接口测试</h3>
+      <p>描述 API 场景，Coze AI 自动生成端点定义（Method、URL、Headers、Body、断言）。支持 JSONPath 断言引擎，响应时间可视化。</p>
+      <div style="margin-top:0.8rem">
+        <span class="tag tag-ai">Coze 生成</span>
+        <span class="tag tag-exec">断言引擎</span>
+        <span class="tag tag-report">图表报告</span>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <h3>性能测试</h3>
+      <p>描述压测场景，Dify AI 推荐并发数/持续时间/负载模式。asyncio 高并发引擎，秒级采集 P50/P95/P99 延迟和 RPS 吞吐量。</p>
+      <div style="margin-top:0.8rem">
+        <span class="tag tag-ai">Dify 推荐</span>
+        <span class="tag tag-exec">异步压测</span>
+        <span class="tag tag-report">实时趋势图</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How it works -->
+<section class="section" style="background:var(--slate-50)">
+  <div class="container">
+    <h2>3 步完成测试</h2>
+    <p class="subtitle">所有测试类型统一的操作流程</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-number s1">1</div>
+        <h4>输入需求</h4>
+        <p>用中文自然语言描述你要测试的功能、接口或性能场景</p>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <div class="step-number s2">2</div>
+        <h4>AI 生成 + 审核</h4>
+        <p>AI 自动生成测试用例/端点/配置，你可以在线编辑和调整</p>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <div class="step-number s3">3</div>
+        <h4>执行 + 报告</h4>
+        <p>一键执行测试，实时查看图表和报告，自动保存结果</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Quick Start -->
+<section class="section container">
+  <h2>快速开始</h2>
+  <p class="subtitle">本地运行仅需 3 个步骤</p>
+  <div class="code-block">
+<span class="c"># 1. 安装依赖</span>
+pip install -e .[dev]
+
+<span class="c"># 2. 配置 API 密钥（可选，无密钥也能用模板模式）</span>
+cp config/settings.example.yaml config/settings.yaml
+<span class="c"># 编辑 config/settings.yaml 填入 Coze/Dify/n8n 密钥</span>
+
+<span class="c"># 3. 启动 Web UI</span>
+streamlit run src/testcode/web_ui.py
+  </div>
+</section>
+
+<!-- Deployment -->
+<section class="section container">
+  <h2>部署方式</h2>
+  <p class="subtitle">选择适合你的部署方案</p>
+  <div class="deploy-cards">
+    <div class="deploy-card">
+      <h3>☁️ Streamlit Cloud <span class="badge badge-free">免费</span></h3>
+      <p style="color:var(--slate-600);margin-bottom:0.8rem">最简单的方式，连接 GitHub 仓库自动部署。</p>
+      <ol>
+        <li>Fork 本仓库到你的 GitHub</li>
+        <li>访问 <a href="https://share.streamlit.io" target="_blank" rel="noopener">share.streamlit.io</a></li>
+        <li>点击 "New app" → 选择仓库 → 部署</li>
+        <li>在 Settings → Secrets 中配置 API 密钥</li>
+      </ol>
+    </div>
+    <div class="deploy-card">
+      <h3>🐳 Docker 部署</h3>
+      <p style="color:var(--slate-600);margin-bottom:0.8rem">适合自有服务器或云主机。</p>
+      <ol>
+        <li>复制 <code>.env.example</code> 为 <code>.env</code> 并填入密钥</li>
+        <li>运行 <code>docker compose up --build</code></li>
+        <li>访问 <code>http://localhost:8501</code></li>
+      </ol>
+    </div>
+    <div class="deploy-card">
+      <h3>💻 本地运行</h3>
+      <p style="color:var(--slate-600);margin-bottom:0.8rem">开发调试，需要 Python 3.11+。</p>
+      <ol>
+        <li><code>pip install -e .[dev]</code></li>
+        <li><code>streamlit run src/testcode/web_ui.py</code></li>
+        <li>浏览器自动打开 http://localhost:8501</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- Architecture -->
+<section class="section" style="background:var(--slate-50)">
+  <div class="container">
+    <h2>技术架构</h2>
+    <p class="subtitle">Python 全栈，AI 编排 + 异步执行</p>
+    <div style="display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;margin-top:2rem">
+      <div style="background:#fff;border:1px solid var(--slate-200);border-radius:var(--radius);padding:1.2rem 1.8rem;text-align:center;min-width:140px">
+        <div style="font-size:1.5rem;margin-bottom:0.3rem">🖥️</div>
+        <strong>Streamlit</strong>
+        <p style="font-size:0.82rem;color:var(--slate-600)">Web 可视化界面</p>
+      </div>
+      <div style="display:flex;align-items:center;font-size:1.2rem;color:var(--slate-400)">→</div>
+      <div style="background:#fff;border:1px solid var(--slate-200);border-radius:var(--radius);padding:1.2rem 1.8rem;text-align:center;min-width:140px">
+        <div style="font-size:1.5rem;margin-bottom:0.3rem">🧠</div>
+        <strong>Dify + Coze</strong>
+        <p style="font-size:0.82rem;color:var(--slate-600)">AI 用例生成 &amp; 增强</p>
+      </div>
+      <div style="display:flex;align-items:center;font-size:1.2rem;color:var(--slate-400)">→</div>
+      <div style="background:#fff;border:1px solid var(--slate-200);border-radius:var(--radius);padding:1.2rem 1.8rem;text-align:center;min-width:140px">
+        <div style="font-size:1.5rem;margin-bottom:0.3rem">⚙️</div>
+        <strong>n8n + asyncio</strong>
+        <p style="font-size:0.82rem;color:var(--slate-600)">自动化执行 &amp; 压测</p>
+      </div>
+      <div style="display:flex;align-items:center;font-size:1.2rem;color:var(--slate-400)">→</div>
+      <div style="background:#fff;border:1px solid var(--slate-200);border-radius:var(--radius);padding:1.2rem 1.8rem;text-align:center;min-width:140px">
+        <div style="font-size:1.5rem;margin-bottom:0.3rem">📊</div>
+        <strong>Plotly</strong>
+        <p style="font-size:0.82rem;color:var(--slate-600)">可视化报告 &amp; 图表</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="container">
+  <p>Testcode — Python orchestration scaffold for Dify, Coze, and n8n</p>
+  <p><a href="https://github.com/caijin931/Test_code" target="_blank" rel="noopener">GitHub</a> · MIT License</p>
+</footer>
+
+</body>
+</html>

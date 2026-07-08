@@ -280,7 +280,7 @@ def test_api_orchestrator_report_fields() -> None:
     assert report.passed + report.failed == 3
     assert report.total_duration_ms > 0
     assert report.avg_response_time_ms > 0
-    assert report.risk_level in ("low", "medium", "high")
+    assert report.risk_level in ("P3", "P2", "P0")
 
 
 def test_execute_endpoint_connection_error() -> None:

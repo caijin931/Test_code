@@ -333,19 +333,19 @@ class ApiTestOrchestrator:
 
         issues: list[str] = []
         highlights: list[str] = []
-        risk_level = "low"
+        risk_level = "P3"
 
         if failed > 0:
             for r in results:
                 if not r.passed:
                     issues.append(f"{r.method} {r.url} - {r.error_message or 'assertion failed'}")
-            risk_level = "high" if failed > len(results) / 2 else "medium"
+            risk_level = "P0" if failed > len(results) / 2 else "P2"
         else:
             highlights.append("All endpoints passed")
 
         if avg_ms > 500:
             issues.append(f"Average response time ({avg_ms:.0f}ms) exceeds 500ms threshold")
-            risk_level = "medium" if risk_level == "low" else risk_level
+            risk_level = "P2" if risk_level == "P3" else risk_level
 
         highlights.append(f"{passed}/{len(results)} endpoints passed")
         highlights.append(f"Total duration: {total_duration_ms:.0f}ms")

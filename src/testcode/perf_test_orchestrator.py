@@ -322,7 +322,7 @@ class PerfTestOrchestrator:
             return PerfTestReport(
                 request_id=result.request_id,
                 summary="No performance data collected.",
-                risk_level="high",
+                risk_level="P0",
                 highlights=[],
                 bottlenecks=["No data available"],
                 recommendations=["Re-run the test with a reachable target URL"],
@@ -334,25 +334,25 @@ class PerfTestOrchestrator:
         error_rate = result.error_rate
 
         # Determine risk level
-        risk_level = "low"
+        risk_level = "P3"
         bottlenecks: list[str] = []
         recommendations: list[str] = []
 
         if error_rate > 0.05:
-            risk_level = "high"
+            risk_level = "P0"
             bottlenecks.append(f"Error rate {error_rate:.1%} exceeds 5% threshold")
             recommendations.append("Investigate error responses and add retry logic")
         elif error_rate > 0.01:
-            risk_level = "medium"
+            risk_level = "P2"
             bottlenecks.append(f"Error rate {error_rate:.1%} exceeds 1% threshold")
 
         if p95 > 1000:
-            risk_level = "high"
+            risk_level = "P0"
             bottlenecks.append(f"P95 response time ({p95:.0f}ms) exceeds 1000ms")
             recommendations.append("Optimize slow endpoints and add caching")
         elif p95 > 500:
-            if risk_level == "low":
-                risk_level = "medium"
+            if risk_level == "P3":
+                risk_level = "P2"
             bottlenecks.append(f"P95 response time ({p95:.0f}ms) exceeds 500ms")
 
         if p99 > 2000:

@@ -826,7 +826,7 @@ def _render_summary_charts(result: dict) -> None:
         progress_value = 1.0 if status_key == "success" else 0.5 if status_key == "deferred" else 0.2
         st.progress(progress_value)
         st.bar_chart(
-            {"metrics": [case_count, 1 if report.get("risk_level", "low").lower() == "high" else 0]}
+            {"metrics": [case_count, 1 if report.get("risk_level", "P3").upper() == "P0" else 0]}
         )
 
     issues = report.get("issues", [])

@@ -164,15 +164,15 @@ class TestOrchestrator:
         # Deterministic highlights and risk from status
         if status == "success":
             issues: list[str] = []
-            risk_level = "low"
+            risk_level = "P3"
             highlights = ["用例已生成", "数据已补充", "自动化已触发", "执行成功"]
         elif status == "deferred":
             issues = ["n8n 不可用，已降级为延后执行"]
-            risk_level = "medium"
+            risk_level = "P2"
             highlights = ["用例已生成", "数据已补充", "自动化已触发", "已降级处理"]
         else:
             issues = ["自动化测试存在失败项"]
-            risk_level = "high"
+            risk_level = "P0"
             highlights = ["用例已生成", "数据已补充", "自动化已触发", "需要人工复核"]
 
         # Try AI summary

@@ -66,5 +66,5 @@ def test_execute_test_flow_returns_all_artifacts() -> None:
     assert result["test_cases"].cases[0].title.startswith("测试登录功能")
     assert result["enrichment"].datasource == "coze-ai"
     assert result["execution_result"].status == "success"
-    assert result["report"].risk_level == "low"
+    assert result["report"].risk_level == "P3"
     assert len(result["report"].highlights) > 0

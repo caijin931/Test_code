@@ -158,7 +158,7 @@ def test_api_test_report_aggregates() -> None:
     )
     assert report.total_endpoints == 5
     assert report.passed + report.failed == report.total_endpoints
-    assert report.risk_level == "medium"
+    assert report.risk_level == "P2"
 
 
 def test_api_test_report_with_issues() -> None:
@@ -174,8 +174,8 @@ def test_api_test_report_with_issues() -> None:
         results=[],
         issues=["Endpoint /login returned 500", "Timeout on /search"],
         highlights=["/health passed"],
-        risk_level="high",
+        risk_level="P0",
     )
     assert len(report.issues) == 2
     assert len(report.highlights) == 1
-    assert report.risk_level == "high"
+    assert report.risk_level == "P0"

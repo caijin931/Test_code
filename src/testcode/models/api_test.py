@@ -87,5 +87,5 @@ class ApiTestReport(BaseModel):
     results: list[ApiExecutionResult]
     issues: list[str] = Field(default_factory=list)
     highlights: list[str] = Field(default_factory=list)
-    risk_level: str = "medium"
+    risk_level: str = "P2"
     raw: dict[str, Any] = Field(default_factory=dict)

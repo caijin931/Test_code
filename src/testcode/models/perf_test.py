@@ -80,7 +80,7 @@ class PerfTestReport(BaseModel):
 
     request_id: str
     summary: str
-    risk_level: str = "medium"
+    risk_level: str = "P2"
     highlights: list[str] = Field(default_factory=list)
     bottlenecks: list[str] = Field(default_factory=list)
     recommendations: list[str] = Field(default_factory=list)

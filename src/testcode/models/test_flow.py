@@ -86,7 +86,7 @@ class ExecutionResult(BaseModel):
 class TestReport(BaseModel):
     request_id: str
     summary: str
-    risk_level: str = "medium"
+    risk_level: str = "P2"
     highlights: list[str] = Field(default_factory=list)
     issues: list[str] = Field(default_factory=list)
     raw: dict[str, Any] = Field(default_factory=dict)

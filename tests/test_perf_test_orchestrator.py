@@ -216,7 +216,7 @@ def test_perf_test_report_bottlenecks() -> None:
     orch = PerfTestOrchestrator(registry=registry)
     report = orch._analyze_with_dify(perf_result)
 
-    assert report.risk_level == "high"
+    assert report.risk_level == "P0"
     assert len(report.bottlenecks) > 0
     assert len(report.recommendations) > 0
 
@@ -234,5 +234,5 @@ def test_perf_test_no_aggregate_report() -> None:
     orch = PerfTestOrchestrator(registry=registry)
     report = orch._analyze_with_dify(perf_result)
 
-    assert report.risk_level == "high"
+    assert report.risk_level == "P0"
     assert "No performance data collected" in report.summary

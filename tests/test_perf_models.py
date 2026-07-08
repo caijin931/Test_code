@@ -151,13 +151,13 @@ def test_perf_test_report_fields() -> None:
     report = PerfTestReport(
         request_id="req-1",
         summary="Performance test completed with 95th percentile at 250ms.",
-        risk_level="low",
+        risk_level="P3",
         highlights=["All requests succeeded", "p95 < 300ms"],
         bottlenecks=[],
         recommendations=["Consider CDN for static assets"],
     )
     assert report.summary != ""
-    assert report.risk_level == "low"
+    assert report.risk_level == "P3"
     assert len(report.highlights) == 2
     assert len(report.recommendations) == 1
 
@@ -167,11 +167,11 @@ def test_perf_test_report_with_bottlenecks() -> None:
     report = PerfTestReport(
         request_id="req-3",
         summary="Significant performance degradation detected.",
-        risk_level="high",
+        risk_level="P0",
         highlights=["Throughput dropped after 100 concurrent users"],
         bottlenecks=["Database connection pool exhausted at 100 connections"],
         recommendations=["Increase pool size to 200", "Add connection pooling"],
     )
     assert len(report.bottlenecks) == 1
     assert len(report.recommendations) == 2
-    assert report.risk_level == "high"
+    assert report.risk_level == "P0"

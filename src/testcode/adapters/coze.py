@@ -80,13 +80,13 @@ class CozeClient(ProviderAdapter):
             # May have completed synchronously
             return self._normalize_result(data, kind="chat")
 
-        # Step 2: poll for completion
+        # Step 2: poll for completion via GET (standard for coze.cn / coze.com)
         max_attempts = int(self.timeout)
         for attempt in range(max_attempts):
             time.sleep(1.0)
-            poll_resp = self._client.post(
+            poll_resp = self._client.get(
                 "/v3/chat/retrieve",
-                json={"chat_id": chat_id, "conversation_id": conversation_id},
+                params={"chat_id": chat_id, "conversation_id": conversation_id},
             )
             poll_data = self._parse_response(poll_resp)
             chat_info = poll_data.get("data", poll_data)
@@ -99,7 +99,11 @@ class CozeClient(ProviderAdapter):
             if status == "completed":
                 return self._normalize_result(poll_data, kind="chat")
             elif status in ("failed", "cancelled", "error"):
-                err_msg = chat_info.get("error_message") or chat_info.get("error") or f"Chat {status}"
+                err_msg = (
+                    chat_info.get("error_message")
+                    or chat_info.get("error")
+                    or f"Chat {status}"
+                )
                 raise CozeAPIError(500, str(err_msg), raw=poll_data)
 
         raise CozeAPIError(

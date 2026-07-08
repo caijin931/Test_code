@@ -80,7 +80,7 @@ class CozeClient(ProviderAdapter):
             # May have completed synchronously
             return self._normalize_result(data, kind="chat")
 
-        # Step 2: poll for completion via GET (standard for coze.cn / coze.com)
+        # Step 2: poll for completion via GET
         max_attempts = int(self.timeout)
         for attempt in range(max_attempts):
             time.sleep(1.0)
@@ -97,7 +97,8 @@ class CozeClient(ProviderAdapter):
             ).lower()
 
             if status == "completed":
-                return self._normalize_result(poll_data, kind="chat")
+                # Step 3: fetch the actual messages (coze.cn requires separate call)
+                return self._fetch_messages(chat_id, conversation_id)
             elif status in ("failed", "cancelled", "error"):
                 err_msg = (
                     chat_info.get("error_message")
@@ -129,6 +130,17 @@ class CozeClient(ProviderAdapter):
     # helpers
     # ------------------------------------------------------------------
 
+    def _fetch_messages(self, chat_id: str, conversation_id: str) -> ProviderResult:
+        """Fetch message list after chat has completed."""
+        msg_resp = self._client.get(
+            "/v3/chat/message/list",
+            params={"chat_id": chat_id, "conversation_id": conversation_id},
+        )
+        msg_data = self._parse_response(msg_resp)
+        return self._normalize_result(msg_data, kind="chat")
+
+    # ------------------------------------------------------------------
+
     def _parse_response(self, response: httpx.Response) -> dict[str, Any]:
         try:
             data = response.json()
@@ -146,12 +158,23 @@ class CozeClient(ProviderAdapter):
         return data
 
     def _normalize_result(self, data: dict[str, Any], kind: str) -> ProviderResult:
-        """Normalize v3 API response into a ProviderResult."""
-        chat_info = data.get("data", data)
+        """Normalize v3 API response into a ProviderResult.
+
+        Handles both:
+        - retrieve response: data.messages is a list of message objects
+        - message/list response: data is a flat list of message objects
+        """
+        body = data.get("data", data)
         messages: list[ProviderMessage] = []
         content = ""
 
-        for item in chat_info.get("messages", []) or []:
+        # Handle flat list (from /v3/chat/message/list)
+        if isinstance(body, list):
+            raw_messages = body
+        else:
+            raw_messages = body.get("messages", []) or []
+
+        for item in raw_messages:
             item_role = str(item.get("role") or "assistant")
             item_content = str(item.get("content") or "")
             if not content and item_content and item_role in ("assistant", "bot"):
@@ -162,9 +185,9 @@ class CozeClient(ProviderAdapter):
 
         if not content:
             content = str(
-                chat_info.get("answer")
-                or chat_info.get("result")
-                or chat_info.get("content")
+                body.get("answer")
+                or body.get("result")
+                or body.get("content")
                 or ""
             )
 

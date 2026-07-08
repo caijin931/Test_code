@@ -128,7 +128,13 @@ class TestOrchestrator:
                 datasource="coze-fallback",
                 test_data={"account": "demo-user", "password": "demo-pass"},
                 browser_hints={"browser": "chromium", "headless": True},
-                raw={"source": "coze", "generated_by": "fallback", "case_count": len(bundle.cases), "error": str(exc)},
+                raw={
+                    "source": "coze",
+                    "generated_by": "fallback",
+                    "case_count": len(bundle.cases),
+                    "error": str(exc),
+                    "raw_response_preview": str(getattr(exc, "raw", ""))[:500] if hasattr(exc, "raw") else str(exc)[:500],
+                },
             )
 
     def build_automation_payload(self, requirement: TestRequirement, bundle: TestCaseBundle, enrichment: CozeEnrichment) -> AutomationPayload:

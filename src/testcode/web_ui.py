@@ -617,7 +617,7 @@ def _render_func_step3_execution(settings_path: Path) -> None:
                     )
 
                 report = flow.summarize_report(
-                    dify=orchestrator.registry.get("dify"),
+                    dify_client=orchestrator.registry.get("dify"),
                     requirement=requirement,
                     execution_result=execution_result,
                 )

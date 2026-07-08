@@ -106,7 +106,7 @@ class TestOrchestrator:
         prompt = self._build_enrichment_prompt(requirement, bundle)
         try:
             self.logger.info("Calling Coze for test case enrichment", extra={"request_id": requirement.request_id})
-            bot_id = getattr(coze_client, "bot_id", "") or "testcode"
+            bot_id = getattr(coze_client, "bot_id", "") or ""
             result = coze_client.chat(bot_id=bot_id, user_id="web-ui", query=prompt)
             data = self._extract_json_from_response(result.content)
             return CozeEnrichment(

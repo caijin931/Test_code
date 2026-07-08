@@ -1021,6 +1021,7 @@ def _run_api_ai_generation(settings_path: Path, description: str) -> None:
         try:
             orchestrator = build_orchestrator(settings_path)
             coze = orchestrator.registry.get("coze")
+            bot_id = getattr(coze, "bot_id", "") or "api-gen"
             prompt = (
                 "你是一个 API 测试专家。请根据以下接口描述生成 API 测试端点列表。\n\n"
                 f"接口描述: {description}\n\n"
@@ -1036,7 +1037,7 @@ def _run_api_ai_generation(settings_path: Path, description: str) -> None:
                 '  assertions: 断言数组 [{"path": "$.body.xxx", "operator": "equals", "expected": "value"}]\n\n'
                 "要求：返回有效的 JSON 数组，不要包含额外的文本或 markdown 代码块标记。"
             )
-            result = coze.chat(bot_id="api-gen", user_id="web-ui", query=prompt)
+            result = coze.chat(bot_id=bot_id, user_id="web-ui", query=prompt)
 
             # Parse response
             content = result.content

@@ -49,6 +49,7 @@ class ProviderRegistry:
         return cls(
             coze=CozeClient(
                 access_token=settings.coze.access_token,
+                bot_id=settings.coze.bot_id,
                 base_url=settings.coze.base_url,
                 timeout=settings.coze.timeout_seconds,
             ),

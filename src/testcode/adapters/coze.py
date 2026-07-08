@@ -27,6 +27,7 @@ class CozeAPIError(RuntimeError):
 @dataclass(slots=True)
 class CozeClient(ProviderAdapter):
     access_token: str
+    bot_id: str = ""
     base_url: str = "https://api.coze.com"
     timeout: float = 30.0
     client: httpx.Client | None = None

@@ -284,8 +284,12 @@ class TestOrchestrator:
     def _extract_json_from_response(content: str) -> dict[str, Any]:
         """Extract a JSON object from an AI response string.
 
-        Handles: plain JSON, JSON inside ```json blocks, JSON with surrounding text.
+        Handles: plain JSON, JSON inside ```json blocks, JSON with surrounding
+        text, and DeepSeek-R1 style ``<think>...</think>`` reasoning blocks.
         """
+        # Strip <think>...</think> blocks (DeepSeek-R1 reasoning)
+        content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
+
         # Try markdown code block first
         match = re.search(r"```(?:json)?\s*\n?(.*?)\n?```", content, re.DOTALL)
         if match:
@@ -308,7 +312,8 @@ class TestOrchestrator:
             return json.loads(content)
         except json.JSONDecodeError:
             raise ValueError(
-                f"Failed to parse AI response as JSON. Raw content: {content[:500]}"
+                f"Failed to parse AI response as JSON. "
+                f"Raw content: {content[:300]}"
             )
 
     def _parse_test_cases_from_dict(

@@ -179,14 +179,18 @@ class TestOrchestrator:
         summary = self._build_static_summary(status)
         try:
             prompt = (
-                "请根据以下测试执行结果生成一段简洁的中文执行摘要（100字以内）。\n"
+                "请根据以下测试执行结果生成一段简洁的中文执行摘要（100字以内）。"
+                "只输出摘要文字，不要输出JSON、代码块或任何其他格式。\n"
                 f"执行状态: {status}\n"
                 f"执行ID: {execution_result.execution_id or 'N/A'}\n"
                 f"原始结果: {json.dumps(execution_result.raw, ensure_ascii=False)[:1000]}"
             )
             result = dify_client.chat(query=prompt, user="web-ui", inputs={})
-            if result.content and len(result.content) > 10:
-                summary = result.content.strip()
+            raw = (result.content or "").strip()
+            # Reject responses that look like test-case JSON, model reasoning, or are too long
+            if raw and len(raw) > 10 and len(raw) < 500:
+                if "{" not in raw and "<think>" not in raw and '"cases"' not in raw:
+                    summary = raw
         except Exception as exc:
             self.logger.warning("AI summary generation failed, using static summary: %s", exc)
 

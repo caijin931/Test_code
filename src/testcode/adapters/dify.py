@@ -32,7 +32,14 @@ class DifyClient(ProviderAdapter):
             self._client.close()
 
     def chat(self, query: str, user: str, inputs: dict[str, Any] | None = None) -> ProviderResult:
-        response = self._client.post("/v1/chat-messages", json={"query": query, "user": user, "inputs": inputs or {}})
+        payload: dict[str, Any] = {
+            "query": query,
+            "user": user,
+            "response_mode": "blocking",
+        }
+        if inputs:
+            payload["inputs"] = inputs
+        response = self._client.post("/v1/chat-messages", json=payload)
         return self._normalize(self._parse(response), kind="chat")
 
     def run_workflow(self, workflow_id: str, parameters: dict[str, Any]) -> ProviderResult:

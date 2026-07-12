@@ -58,5 +58,10 @@ docker-compose.override.yml
 *.crt
 *.cer
 
+# Personal files
+简历*.md
+简历*.txt
+resume_text.txt
+
 # Notebook checkpoints
 .ipynb_checkpoints/

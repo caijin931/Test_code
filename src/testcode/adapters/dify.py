@@ -35,10 +35,9 @@ class DifyClient(ProviderAdapter):
         payload: dict[str, Any] = {
             "query": query,
             "user": user,
+            "inputs": inputs or {},
             "response_mode": "blocking",
         }
-        if inputs:
-            payload["inputs"] = inputs
         response = self._client.post("/v1/chat-messages", json=payload)
         return self._normalize(self._parse(response), kind="chat")
 

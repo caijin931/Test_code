@@ -428,8 +428,8 @@ def _run_ai_generation_pipeline(settings_path: Path, requirement: TestRequiremen
         return
 
     flow = TestOrchestrator(registry=orchestrator.registry)
-    dify = orchestrator.registry.get("dify")
     coze = orchestrator.registry.get("coze")
+    dify, coze = _patch_clients_from_yaml(settings_path, coze)
 
     # Stage 1: Dify generation
     status["dify"] = "running"
@@ -594,58 +594,77 @@ def _render_func_step3_execution(settings_path: Path) -> None:
         pipeline_status["n8n"] = "running"
 
         with st.spinner("正在触发 n8n 自动化工作流..."):
+            orchestrator = build_orchestrator(settings_path)
+            flow = TestOrchestrator(registry=orchestrator.registry)
+            payload = flow.build_automation_payload(requirement, bundle, enrichment)
+            n8n = orchestrator.registry.get("n8n")
+
+            # n8n 调试面板
+            n8n_debug = st.expander("🔧 n8n 调试信息", expanded=False)
+            with n8n_debug:
+                st.write(f"**n8n Webhook URL**: {n8n_url}")
+                st.write(f"**n8n base_url**: {n8n.base_url}")
+                st.write(f"**用例数量**: {len(payload.cases)}")
+                st.write(f"**Payload 预览**:")
+                st.json(_jsonable(payload))
+
             try:
-                orchestrator = build_orchestrator(settings_path)
-                flow = TestOrchestrator(registry=orchestrator.registry)
-
-                payload = flow.build_automation_payload(requirement, bundle, enrichment)
-                n8n = orchestrator.registry.get("n8n")
-
-                try:
-                    n8n_trigger = n8n.trigger_workflow(n8n_url, payload.model_dump())
-                    if n8n_trigger.execution_id:
-                        st.info(f"n8n 工作流已触发，等待完成... (execution_id: {n8n_trigger.execution_id})")
-                        n8n_trigger = n8n.wait_for_completion(n8n_trigger.execution_id)
-                    execution_result = flow.normalize_execution_result(requirement, n8n_trigger)
-                    execution_state = execution_result.status.lower()
-                except N8nAPIError as exc:
-                    execution_state = "deferred"
-                    execution_result = ExecutionResult(
-                        request_id=requirement.request_id,
-                        status="deferred",
-                        raw={"error": str(exc), "status_code": exc.status_code},
-                    )
-
-                report = flow.summarize_report(
-                    dify_client=orchestrator.registry.get("dify"),
-                    requirement=requirement,
-                    execution_result=execution_result,
+                n8n_trigger = n8n.trigger_workflow(n8n_url, payload.model_dump())
+                with n8n_debug:
+                    st.write(f"**触发响应状态**: {n8n_trigger.status}")
+                    st.write(f"**execution_id**: {n8n_trigger.execution_id}")
+                if n8n_trigger.execution_id:
+                    st.info(f"n8n 工作流已触发，等待完成... (execution_id: {n8n_trigger.execution_id})")
+                    n8n_trigger = n8n.wait_for_completion(n8n_trigger.execution_id)
+                    with n8n_debug:
+                        st.write(f"**完成状态**: {n8n_trigger.status}")
+                execution_result = flow.normalize_execution_result(requirement, n8n_trigger)
+                execution_state = execution_result.status.lower()
+            except N8nAPIError as exc:
+                execution_state = "deferred"
+                execution_result = ExecutionResult(
+                    request_id=requirement.request_id,
+                    status="deferred",
+                    raw={"error": str(exc), "status_code": exc.status_code},
                 )
-
-                result = {
-                    "requirement": _jsonable(requirement),
-                    "test_cases": _jsonable(bundle),
-                    "enrichment": _jsonable(enrichment),
-                    "automation_payload": _jsonable(payload),
-                    "execution_result": _jsonable(execution_result),
-                    "execution_state": execution_state,
-                    "report": _jsonable(report),
-                }
-                st.session_state.func_last_result = result
-                pipeline_status["n8n"] = "done" if execution_state == "success" else "error"
-
-                # Save report
-                report_path = (
-                    ARTIFACTS_DIR
-                    / f"ui-report-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S')}.json"
-                )
-                report_path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
-                st.success(f"报告已保存: {report_path.name}")
-
+                with n8n_debug:
+                    st.error(f"**n8n 错误**: {exc}")
+                    st.write(f"**状态码**: {exc.status_code}")
             except Exception as exc:
-                st.error(f"执行失败: {exc}")
-                pipeline_status["n8n"] = "error"
-                return
+                execution_state = "deferred"
+                execution_result = ExecutionResult(
+                    request_id=requirement.request_id,
+                    status="deferred",
+                    raw={"error": str(exc)},
+                )
+                with n8n_debug:
+                    st.error(f"**异常**: {exc}")
+
+            # Save result and report (runs on both success and fallback)
+            report = flow.summarize_report(
+                dify_client=orchestrator.registry.get("dify"),
+                requirement=requirement,
+                execution_result=execution_result,
+            )
+            result = {
+                "requirement": _jsonable(requirement),
+                "test_cases": _jsonable(bundle),
+                "enrichment": _jsonable(enrichment),
+                "automation_payload": _jsonable(payload),
+                "execution_result": _jsonable(execution_result),
+                "execution_state": execution_state,
+                "report": _jsonable(report),
+            }
+            st.session_state.func_last_result = result
+            pipeline_status["n8n"] = "done" if execution_state == "success" else "error"
+
+            # Save report
+            report_path = (
+                ARTIFACTS_DIR
+                / f"ui-report-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S')}.json"
+            )
+            report_path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+            st.success(f"报告已保存: {report_path.name}")
 
     # Display results (from cached or fresh)
     result = st.session_state.func_last_result
@@ -720,6 +739,44 @@ def _render_func_step3_execution(settings_path: Path) -> None:
 # ---------------------------------------------------------------------------
 # functional test helpers
 # ---------------------------------------------------------------------------
+
+
+def _patch_clients_from_yaml(settings_path: Path, coze: Any) -> tuple[Any, Any]:
+    """从 YAML 读取配置并修补 Coze / 创建 Dify 客户端，解决 Streamlit 缓存问题。"""
+    import httpx as _httpx
+    from testcode.adapters.dify import DifyClient as _DifyClient
+
+    try:
+        _yaml = __import__("yaml")
+    except ImportError:
+        return _DifyClient(), coze
+
+    _raw = settings_path.read_text(encoding="utf-8")
+    _cfg = _yaml.safe_load(_raw) or {}
+    _coze_cfg = _cfg.get("coze", {})
+    _dify_cfg = _cfg.get("dify", {})
+
+    # Patch Coze
+    try:
+        if _coze_cfg.get("base_url"):
+            coze.base_url = str(_coze_cfg["base_url"])
+            coze._client = _httpx.Client(
+                base_url=coze.base_url, timeout=coze.timeout, headers=coze._headers,
+            )
+        if _coze_cfg.get("access_token"):
+            coze.access_token = str(_coze_cfg["access_token"])
+        if _coze_cfg.get("bot_id"):
+            coze.bot_id = str(_coze_cfg["bot_id"])
+    except Exception:
+        pass
+
+    # Create fresh DifyClient bypassing CachedDifyClient
+    dify = _DifyClient(
+        api_key=str(_dify_cfg.get("api_key", "")),
+        base_url=str(_dify_cfg.get("base_url", "") or "https://api.dify.ai"),
+        timeout=60.0,
+    )
+    return dify, coze
 
 
 def _reset_func_state() -> None:
@@ -1021,6 +1078,7 @@ def _run_api_ai_generation(settings_path: Path, description: str) -> None:
         try:
             orchestrator = build_orchestrator(settings_path)
             coze = orchestrator.registry.get("coze")
+            _, coze = _patch_clients_from_yaml(settings_path, coze)
             bot_id = getattr(coze, "bot_id", "") or "api-gen"
             prompt = (
                 "你是一个 API 测试专家。请根据以下接口描述生成 API 测试端点列表。\n\n"
@@ -1512,7 +1570,7 @@ def _run_perf_ai_suggestion(settings_path: Path, config: dict) -> None:
     with st.spinner("Dify 正在分析性能测试场景..."):
         try:
             orchestrator = build_orchestrator(settings_path)
-            dify = orchestrator.registry.get("dify")
+            dify, _ = _patch_clients_from_yaml(settings_path, orchestrator.registry.coze)
             prompt = (
                 "你是一个性能测试专家。请根据以下场景描述推荐性能测试配置参数。\n\n"
                 f"目标 URL: {config.get('target_url', '')}\n"
@@ -1896,8 +1954,8 @@ def main() -> None:
 
 
 def _load_settings_path() -> Path:
-    default = Path("config/settings.example.yaml")
-    text = st.sidebar.text_input("Settings file", value=str(default), key="global_settings")
+    default = Path("config/settings.yaml") if Path("config/settings.yaml").exists() else Path("config/settings.example.yaml")
+    text = st.sidebar.text_input("Settings file", value=str(default.resolve()), key="global_settings_v2")
     return Path(text)
 
 

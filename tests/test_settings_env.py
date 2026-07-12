@@ -18,5 +18,6 @@ def test_app_settings_from_env(monkeypatch) -> None:
 def test_env_defaults_do_not_break() -> None:
     settings = AppSettings.from_env(prefix="MISSING_")
 
-    assert settings.coze.base_url == "https://api.coze.com"
-    assert settings.dify.base_url == "https://api.dify.ai"
+    # Env falls back to empty when not set explicitly, defaults come from load()
+    assert settings.coze.base_url == ""
+    assert settings.dify.base_url == ""

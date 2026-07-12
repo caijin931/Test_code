@@ -43,28 +43,36 @@ class AppSettings:
     def load(cls, path: str | Path | None = None, prefix: str = "TESTCODE_") -> "AppSettings":
         base = cls.from_yaml(path) if path is not None else cls.from_mapping({})
         overrides = cls.from_env(prefix=prefix)
+
+        def _pick(env_val: Any, yaml_val: Any) -> Any:
+            """Pick env_val if it is non-empty, otherwise fall back to yaml_val."""
+            if env_val is None:
+                return yaml_val
+            s = str(env_val).strip()
+            return s if s else yaml_val
+
         return cls.from_mapping(
             {
                 "coze": {
-                    "access_token": overrides.coze.access_token or base.coze.access_token,
-                    "bot_id": overrides.coze.bot_id or base.coze.bot_id,
-                    "base_url": overrides.coze.base_url or base.coze.base_url,
-                    "timeout_seconds": overrides.coze.timeout_seconds or base.coze.timeout_seconds,
+                    "access_token": _pick(overrides.coze.access_token, base.coze.access_token),
+                    "bot_id": _pick(overrides.coze.bot_id, base.coze.bot_id),
+                    "base_url": _pick(overrides.coze.base_url, base.coze.base_url) or "https://api.coze.com",
+                    "timeout_seconds": _pick(overrides.coze.timeout_seconds, base.coze.timeout_seconds) or 30.0,
                 },
                 "dify": {
-                    "api_key": overrides.dify.api_key or base.dify.api_key,
-                    "base_url": overrides.dify.base_url or base.dify.base_url,
-                    "timeout_seconds": overrides.dify.timeout_seconds or base.dify.timeout_seconds,
+                    "api_key": _pick(overrides.dify.api_key, base.dify.api_key),
+                    "base_url": _pick(overrides.dify.base_url, base.dify.base_url) or "https://api.dify.ai",
+                    "timeout_seconds": _pick(overrides.dify.timeout_seconds, base.dify.timeout_seconds) or 30.0,
                     "cache_enabled": overrides.dify.cache_enabled if overrides.dify.cache_enabled is not None else base.dify.cache_enabled,
-                    "cache_directory": overrides.dify.cache_directory or base.dify.cache_directory,
-                    "cache_ttl_seconds": overrides.dify.cache_ttl_seconds or base.dify.cache_ttl_seconds,
-                    "cache_backend": overrides.dify.cache_backend or base.dify.cache_backend,
-                    "cache_redis_url": overrides.dify.cache_redis_url or base.dify.cache_redis_url,
-                    "cache_redis_prefix": overrides.dify.cache_redis_prefix or base.dify.cache_redis_prefix,
+                    "cache_directory": _pick(overrides.dify.cache_directory, base.dify.cache_directory) or ".cache/dify",
+                    "cache_ttl_seconds": _pick(overrides.dify.cache_ttl_seconds, base.dify.cache_ttl_seconds) or 86400,
+                    "cache_backend": _pick(overrides.dify.cache_backend, base.dify.cache_backend) or "file",
+                    "cache_redis_url": _pick(overrides.dify.cache_redis_url, base.dify.cache_redis_url),
+                    "cache_redis_prefix": _pick(overrides.dify.cache_redis_prefix, base.dify.cache_redis_prefix) or "testcode:dify",
                 },
                 "n8n": {
-                    "base_url": overrides.n8n.base_url or base.n8n.base_url,
-                    "timeout_seconds": overrides.n8n.timeout_seconds or base.n8n.timeout_seconds,
+                    "base_url": _pick(overrides.n8n.base_url, base.n8n.base_url),
+                    "timeout_seconds": _pick(overrides.n8n.timeout_seconds, base.n8n.timeout_seconds) or 30.0,
                 },
             }
         )
@@ -85,13 +93,13 @@ class AppSettings:
                 "coze": {
                     "access_token": os.getenv(f"{prefix}COZE_ACCESS_TOKEN", ""),
                     "bot_id": os.getenv(f"{prefix}COZE_BOT_ID", ""),
-                    "base_url": os.getenv(f"{prefix}COZE_BASE_URL", "https://api.coze.com"),
-                    "timeout_seconds": os.getenv(f"{prefix}COZE_TIMEOUT_SECONDS", 30.0),
+                    "base_url": os.getenv(f"{prefix}COZE_BASE_URL", ""),
+                    "timeout_seconds": os.getenv(f"{prefix}COZE_TIMEOUT_SECONDS", ""),
                 },
                 "dify": {
                     "api_key": os.getenv(f"{prefix}DIFY_API_KEY", ""),
-                    "base_url": os.getenv(f"{prefix}DIFY_BASE_URL", "https://api.dify.ai"),
-                    "timeout_seconds": os.getenv(f"{prefix}DIFY_TIMEOUT_SECONDS", 30.0),
+                    "base_url": os.getenv(f"{prefix}DIFY_BASE_URL", ""),
+                    "timeout_seconds": os.getenv(f"{prefix}DIFY_TIMEOUT_SECONDS", ""),
                     "cache_enabled": os.getenv(f"{prefix}DIFY_CACHE_ENABLED", "true"),
                     "cache_directory": os.getenv(f"{prefix}DIFY_CACHE_DIRECTORY", ".cache/dify"),
                     "cache_ttl_seconds": os.getenv(f"{prefix}DIFY_CACHE_TTL_SECONDS", 86400),
@@ -101,7 +109,7 @@ class AppSettings:
                 },
                 "n8n": {
                     "base_url": os.getenv(f"{prefix}N8N_BASE_URL", ""),
-                    "timeout_seconds": os.getenv(f"{prefix}N8N_TIMEOUT_SECONDS", 30.0),
+                    "timeout_seconds": os.getenv(f"{prefix}N8N_TIMEOUT_SECONDS", ""),
                 },
             }
         )
@@ -116,12 +124,12 @@ class AppSettings:
                 access_token=str(coze.get("access_token", "")),
                 bot_id=str(coze.get("bot_id", "")),
                 base_url=str(coze.get("base_url", "https://api.coze.com")),
-                timeout_seconds=float(coze.get("timeout_seconds", 30.0)),
+                timeout_seconds=_safe_float(coze.get("timeout_seconds", 30.0)),
             ),
             dify=DifySettings(
                 api_key=str(dify.get("api_key", "")),
                 base_url=str(dify.get("base_url", "https://api.dify.ai")),
-                timeout_seconds=float(dify.get("timeout_seconds", 30.0)),
+                timeout_seconds=_safe_float(dify.get("timeout_seconds", 30.0)),
                 cache_enabled=str(dify.get("cache_enabled", "true")).lower() not in {"0", "false", "no"},
                 cache_directory=str(dify.get("cache_directory", ".cache/dify")),
                 cache_ttl_seconds=int(dify.get("cache_ttl_seconds", 86400)),
@@ -131,12 +139,22 @@ class AppSettings:
             ),
             n8n=N8nSettings(
                 base_url=str(n8n.get("base_url", "")),
-                timeout_seconds=float(n8n.get("timeout_seconds", 30.0)),
+                timeout_seconds=_safe_float(n8n.get("timeout_seconds", 30.0)),
             ),
         )
 
     def create_n8n_client(self) -> N8nClient:
         return N8nClient(base_url=self.n8n.base_url, timeout=self.n8n.timeout_seconds)
+
+
+def _safe_float(value: Any, default: float = 30.0) -> float:
+    """Convert value to float, falling back to default for empty/None strings."""
+    if value is None or value == "":
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
 
 
 def _parse_simple_yaml(text: str) -> dict[str, Any]:

@@ -285,10 +285,17 @@ class TestOrchestrator:
         """Extract a JSON object from an AI response string.
 
         Handles: plain JSON, JSON inside ```json blocks, JSON with surrounding
-        text, and DeepSeek-R1 style ``<think>...</think>`` reasoning blocks.
+        text, DeepSeek-R1 ``<think>...</think>`` blocks, and common Chinese
+        opening phrases like "好的，我将为你回答".
         """
         # Strip <think>...</think> blocks (DeepSeek-R1 reasoning)
         content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
+
+        # Strip common Chinese / English opening phrases
+        content = re.sub(
+            r"^(好的[，,]\s*我将为你回答|好的[，,]?\s*|我来回答[：:]?\s*|OK[，,]\s*I will answer[：:]?\s*)",
+            "", content, flags=re.IGNORECASE,
+        ).strip()
 
         # Try markdown code block first
         match = re.search(r"```(?:json)?\s*\n?(.*?)\n?```", content, re.DOTALL)
@@ -304,6 +311,12 @@ class TestOrchestrator:
 
         try:
             return json.loads(candidate)
+        except json.JSONDecodeError:
+            pass
+
+        # If truncated, try to complete the JSON by counting braces
+        try:
+            return _complete_truncated_json(candidate)
         except json.JSONDecodeError:
             pass
 
@@ -396,3 +409,11 @@ class TestOrchestrator:
             "failed": "测试流已完成，但自动化执行失败。",
         }
         return summary_map.get(status, f"测试流已完成，状态为 {status}。")
+
+
+def _complete_truncated_json(text: str) -> dict[str, Any]:
+    """Attempt to complete a truncated JSON string by closing unclosed braces/brackets."""
+    open_braces = text.count("{") - text.count("}")
+    open_brackets = text.count("[") - text.count("]")
+    suffix = "]" * max(0, open_brackets) + "}" * max(0, open_braces)
+    return json.loads(text + suffix)

@@ -1935,6 +1935,8 @@ def main() -> None:
         except Exception:
             st.markdown("🔴 配置加载失败")
 
+        _render_sidebar_api_config(settings_path)
+
     # main tabs
     tab1, tab2, tab3, tab4 = st.tabs(["📋 功能测试", "🔌 接口测试", "⚡ 性能测试", "📊 报告中心"])
 
@@ -1951,6 +1953,99 @@ def main() -> None:
 # ---------------------------------------------------------------------------
 # helpers
 # ---------------------------------------------------------------------------
+
+
+def _render_sidebar_api_config(settings_path: Path) -> None:
+    """侧边栏 API 配置面板：在线编辑和保存 Coze/Dify/n8n 连接参数。"""
+    st.markdown("---")
+    with st.expander("🔑 API 配置", expanded=False):
+        # 读取现有 YAML 配置
+        _yaml = __import__("yaml")
+        try:
+            _raw = settings_path.read_text(encoding="utf-8")
+            _cfg = _yaml.safe_load(_raw) or {}
+        except Exception:
+            _cfg = {}
+        _coze = _cfg.get("coze", {}) or {}
+        _dify = _cfg.get("dify", {}) or {}
+        _n8n = _cfg.get("n8n", {}) or {}
+
+        COZE_URLS = ["https://api.coze.cn", "https://api.coze.com"]
+        DIFY_URLS = ["https://api.dify.ai"]
+
+        with st.form("sidebar_api_config_form"):
+            # --- Coze ---
+            st.markdown("**🤖 Coze**")
+            coze_url = st.selectbox(
+                "Base URL",
+                options=COZE_URLS + ["自定义"],
+                index=_safe_url_index(COZE_URLS, str(_coze.get("base_url", ""))),
+                key="cfg_coze_url",
+            )
+            if coze_url == "自定义":
+                coze_url = st.text_input("自定义 URL", value=str(_coze.get("base_url", "")), key="cfg_coze_url_custom")
+            coze_token = st.text_input(
+                "Access Token", type="password", value=str(_coze.get("access_token", "")), key="cfg_coze_token",
+            )
+            coze_bot = st.text_input("Bot ID", value=str(_coze.get("bot_id", "")), key="cfg_coze_bot")
+
+            # --- Dify ---
+            st.markdown("**🧠 Dify**")
+            dify_url = st.selectbox(
+                "Base URL",
+                options=DIFY_URLS + ["自定义"],
+                index=_safe_url_index(DIFY_URLS, str(_dify.get("base_url", ""))),
+                key="cfg_dify_url",
+            )
+            if dify_url == "自定义":
+                dify_url = st.text_input("自定义 URL", value=str(_dify.get("base_url", "")), key="cfg_dify_url_custom")
+            dify_key = st.text_input(
+                "API Key", type="password", value=str(_dify.get("api_key", "")), key="cfg_dify_key",
+            )
+
+            # --- n8n ---
+            st.markdown("**⚙️ n8n**")
+            n8n_url = st.text_input("Base URL", value=str(_n8n.get("base_url", "")), key="cfg_n8n_url")
+
+            submitted = st.form_submit_button("💾 保存配置", type="primary", use_container_width=True)
+
+        if submitted:
+            new_cfg = {
+                "coze": {
+                    "access_token": coze_token.strip(),
+                    "bot_id": coze_bot.strip(),
+                    "base_url": coze_url.strip(),
+                    "timeout_seconds": _coze.get("timeout_seconds", 30),
+                },
+                "dify": {
+                    "api_key": dify_key.strip(),
+                    "base_url": dify_url.strip(),
+                    "timeout_seconds": _dify.get("timeout_seconds", 30),
+                    "cache_enabled": _dify.get("cache_enabled", True),
+                    "cache_directory": _dify.get("cache_directory", ".cache/dify"),
+                    "cache_ttl_seconds": _dify.get("cache_ttl_seconds", 86400),
+                    "cache_backend": _dify.get("cache_backend", "file"),
+                    "cache_redis_url": _dify.get("cache_redis_url", ""),
+                    "cache_redis_prefix": _dify.get("cache_redis_prefix", "testcode:dify"),
+                },
+                "n8n": {
+                    "base_url": n8n_url.strip(),
+                    "timeout_seconds": _n8n.get("timeout_seconds", 30),
+                },
+            }
+            try:
+                settings_path.write_text(_yaml.dump(new_cfg, allow_unicode=True, default_flow_style=False), encoding="utf-8")
+                st.success("✅ 配置已保存，下次执行时生效")
+            except Exception as exc:
+                st.error(f"保存失败: {exc}")
+
+
+def _safe_url_index(options: list[str], current: str) -> int:
+    """Return the index of current in options, or the last index (自定义)."""
+    try:
+        return options.index(current)
+    except ValueError:
+        return len(options)  # "自定义"
 
 
 def _load_settings_path() -> Path:
